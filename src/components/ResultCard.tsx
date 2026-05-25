@@ -11,8 +11,34 @@ interface Props {
 
 const HOVER_DELAY_MS = 220;
 
+function extractSnippet(content: string, maxLen = 220): string {
+  const clean = content
+    .replace(/\|[^\n]*\|/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^>\s*/gm, '')
+    .replace(/`{1,3}[^`\n]*`{1,3}/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  if (clean.length <= maxLen) return clean;
+
+  const truncated = clean.slice(0, maxLen);
+  const lastBreak = Math.max(
+    truncated.lastIndexOf('다.'),
+    truncated.lastIndexOf('요.'),
+    truncated.lastIndexOf('. ')
+  );
+  if (lastBreak > maxLen * 0.5) return truncated.slice(0, lastBreak + 2) + '…';
+  return truncated + '…';
+}
+
 export default function ResultCard({ result, onSelect, onGoToSession, isSelected }: Props) {
   const { session, anchor, matchReasonTags } = result;
+  const turn = session.turns.find((t) => t.id === anchor.turnId);
+  const snippet = turn ? extractSnippet(turn.content) : anchor.preview;
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,7 +94,7 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(anchor.preview).catch(() => {});
+    navigator.clipboard.writeText(snippet).catch(() => {});
     setContextMenu(null);
   };
 
@@ -98,7 +124,7 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
 
         {/* content */}
         <div className="px-4 py-2.5">
-          <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">{anchor.preview}</p>
+          <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">{snippet}</p>
         </div>
 
         {/* tags */}
