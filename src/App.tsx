@@ -4,9 +4,12 @@ import Sidebar from './components/Sidebar';
 import SearchView from './components/SearchView';
 import SessionView from './components/SessionView';
 import SplitView from './components/SplitView';
+import Minimap from './components/Minimap';
 import { ChevronDown, Share, MoreHorizontal, Mic, BarChart2, Paperclip, Globe, BookOpen } from 'lucide-react';
 
 const A1_QUERY = '생성형 AI 피드백을 받은 그룹의 글쓰기 수정에 대한 대화에서, effect size를 어떻게 해석하는지 설명한 부분을 찾아주세요';
+const A2_QUERY = "예전에 알림 관련 연구 설계를 논의하다가 연구 조건, 변인, 측정 지표 등을 정리한 '표'가 나왔는데, 정확한 단어는 기억이 안 나고 대화 중간쯤이었던 것 같아요. 그 표를 찾아 주세요.";
+const A2_FOLLOW_UP_QUERY = '참조범위를 수정했습니다. 다시 찾아주세요.';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('empty');
@@ -16,9 +19,23 @@ export default function App() {
   const [hasSearchResults, setHasSearchResults] = useState(false);
   const [utTask, setUtTask] = useState<UTTask | null>(null);
   const [prefillQuery, setPrefillQuery] = useState<string | undefined>(undefined);
+  const [followUpQuery, setFollowUpQuery] = useState<string | undefined>(undefined);
   const [scrollToTurnId, setScrollToTurnId] = useState<string | null>(null);
   const [sessionHighlightAnchorId, setSessionHighlightAnchorId] = useState<string | undefined>(undefined);
   const sessionScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [sessionScrollProgress, setSessionScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const container = sessionScrollContainerRef.current;
+    if (!container || mode !== 'session') return;
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const max = scrollHeight - clientHeight;
+      setSessionScrollProgress(max > 0 ? scrollTop / max : 0);
+    };
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [mode]);
 
   useEffect(() => {
     if (!scrollToTurnId || mode !== 'session') return;
@@ -44,11 +61,15 @@ export default function App() {
     setSessionHighlightAnchorId(undefined);
     if (task.id === 'A1') {
       setPrefillQuery(A1_QUERY);
-      setMode('search');
+      setFollowUpQuery(undefined);
+    } else if (task.id === 'A2') {
+      setPrefillQuery(A2_QUERY);
+      setFollowUpQuery(A2_FOLLOW_UP_QUERY);
     } else {
       setPrefillQuery(undefined);
-      setMode('empty');
+      setFollowUpQuery(undefined);
     }
+    setMode('empty');
   }, []);
 
   const handleSelectSession = useCallback((session: Session) => {
@@ -165,11 +186,37 @@ export default function App() {
             {mode === 'empty' && <EmptyState onEnterSearch={handleEnterSearch} />}
 
             {mode === 'session' && activeSession && (
-              <div className="flex flex-col flex-1 min-h-0">
-                <div ref={sessionScrollContainerRef} className="flex-1 overflow-y-auto scrollbar-thin">
-                  <SessionView session={activeSession} highlightAnchorId={sessionHighlightAnchorId} />
+              <div className="flex flex-1 min-h-0 overflow-hidden">
+                <div className="flex flex-col flex-1 min-w-0 min-h-0">
+                  <div ref={sessionScrollContainerRef} className="flex-1 overflow-y-auto scrollbar-thin">
+                    <SessionView session={activeSession} highlightAnchorId={sessionHighlightAnchorId} />
+                  </div>
+                  <SessionInputBar />
                 </div>
-                <SessionInputBar />
+                {/* minimap — 세션 모드에서만 표시 */}
+                <div className="w-12 flex-shrink-0 border-l border-gray-100 flex flex-col bg-white">
+                  <div className="px-1.5 py-2 border-b border-gray-100 flex-shrink-0 text-center">
+                    <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Map</span>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <Minimap
+                      session={activeSession}
+                      anchorId={sessionHighlightAnchorId ?? ''}
+                      activeTurnId={
+                        activeSession.turns[
+                          Math.min(
+                            Math.floor(sessionScrollProgress * activeSession.turns.length),
+                            activeSession.turns.length - 1
+                          )
+                        ]?.id
+                      }
+                      onClickTurn={(turnId) => {
+                        const el = sessionScrollContainerRef.current?.querySelector(`#${turnId}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -184,6 +231,7 @@ export default function App() {
                 selectedResult={selectedResult}
                 compact={mode === 'split'}
                 initialQuery={prefillQuery}
+                followUpQuery={followUpQuery}
                 utTaskId={utTask?.id}
               />
             )}

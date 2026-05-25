@@ -12,6 +12,7 @@ interface Props {
   selectedResult: SearchResult | null;
   compact?: boolean;
   initialQuery?: string;
+  followUpQuery?: string;
   utTaskId?: string;
 }
 
@@ -32,17 +33,20 @@ function makeAiIntro(results: SearchResult[]): string {
 
 const RESPONSE_DELAY_MS = 1200;
 
-export default function SearchView({ activeSessionId, onSelectResult, onGoToSession, selectedResult, compact, initialQuery, utTaskId }: Props) {
+export default function SearchView({ activeSessionId, onSelectResult, onGoToSession, selectedResult, compact, initialQuery, followUpQuery, utTaskId }: Props) {
   const [messages, setMessages] = useState<SearchChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [scopeSelection, setScopeSelection] = useState<ScopeSelection>({ time: [], range: [], form: [] });
-  const [sortLabel] = useState('추천순');
+  const [sortOrder, setSortOrder] = useState<'추천순' | '최신순'>('추천순');
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryFilledRef = useRef(false);
+  const followUpFilledRef = useRef(false);
 
   const scopeRange: ScopeRange = 'all';
   const scopeTime: ScopeTime = 'all-time';
@@ -55,6 +59,17 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
     return parts.length > 0 ? parts.join(', ') : undefined;
   })();
 
+  useEffect(() => {
+    if (!sortOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sortOpen]);
+
   // Reset when task/initialQuery changes
   useEffect(() => {
     setDraft('');
@@ -62,26 +77,40 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
     setActiveTags([]);
     setIsLoading(false);
     queryFilledRef.current = false;
+    followUpFilledRef.current = false;
   }, [initialQuery]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Fill query on first focus if initialQuery is set
+  const hasResults = messages.some((m) => m.type === 'results');
+
+  const fillDraft = (text: string) => {
+    setDraft(text);
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        const len = textareaRef.current.value.length;
+        textareaRef.current.selectionStart = len;
+        textareaRef.current.selectionEnd = len;
+        textareaRef.current.style.height = 'auto';
+        textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+      }
+    });
+  };
+
   const handleFocus = () => {
-    if (initialQuery && !queryFilledRef.current && draft === '') {
+    if (draft !== '') return;
+    // 2nd fill: after first results appear, use followUpQuery
+    if (followUpQuery && hasResults && !followUpFilledRef.current) {
+      followUpFilledRef.current = true;
+      fillDraft(followUpQuery);
+      return;
+    }
+    // 1st fill: initialQuery on first focus
+    if (initialQuery && !queryFilledRef.current) {
       queryFilledRef.current = true;
-      setDraft(initialQuery);
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          const len = textareaRef.current.value.length;
-          textareaRef.current.selectionStart = len;
-          textareaRef.current.selectionEnd = len;
-          textareaRef.current.style.height = 'auto';
-          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
-        }
-      });
+      fillDraft(initialQuery);
     }
   };
 
@@ -269,10 +298,28 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
                 )}
               </div>
 
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-colors">
-                <span>정렬: {sortLabel}</span>
-                <ChevronDown size={11} />
-              </button>
+              <div className="relative" ref={sortRef}>
+                <button
+                  onClick={() => setSortOpen((v) => !v)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <span>정렬: {sortOrder}</span>
+                  <ChevronDown size={11} className={`transition-transform duration-150 ${sortOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {sortOpen && (
+                  <div className="absolute bottom-full mb-1.5 left-0 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50 min-w-[100px]">
+                    {(['추천순', '최신순'] as const).map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => { setSortOrder(option); setSortOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-xs hover:bg-gray-50 transition-colors ${sortOrder === option ? 'text-blue-600 font-medium' : 'text-gray-700'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 transition-colors">

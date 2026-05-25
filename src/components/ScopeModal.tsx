@@ -14,7 +14,7 @@ interface Props {
 
 const TIME_OPTIONS = ['전체', '오늘', '이번 주', '일주일 전', '전 달'];
 const RANGE_OPTIONS = ['프로젝트', '활성화 채팅', '전 달', '전체'];
-const FORM_OPTIONS_1 = ['이미지', '코드', '텍스트', '수식'];
+const FORM_OPTIONS_1 = ['이미지', '코드', '표', '텍스트', '수식'];
 const FORM_OPTIONS_2 = ['연구설계', '연구'];
 
 export default function ScopeModal({ selection, onChange, onClose }: Props) {
