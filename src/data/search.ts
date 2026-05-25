@@ -8,6 +8,35 @@ interface ScriptedPattern {
 }
 
 const SCRIPTED_PATTERNS: ScriptedPattern[] = [
+  // ── B1: 박물관 오디오 가이드 발표 슬라이드 구성 (s4 T-outline 1위) ─────────
+  {
+    keywords: ['발표 자료의 슬라이드 구성을', '오디오 가이드 리디자인 프로젝트', '슬라이드 구성을 잡았었는데'],
+    results: [
+      { sessionId: 's4', anchorId: 'T-outline',      tags: ['#발표목차', '#슬라이드구성', '#UX리디자인'] },
+      { sessionId: 's5', anchorId: 'B1-fakeslide1',  tags: ['#발표자료', '#연구발표', '#프로젝트구성'] },
+      { sessionId: 's3', anchorId: 'B1-fakeslide2',  tags: ['#슬라이드', '#연구계획', '#발표흐름'] },
+    ],
+  },
+  // ── B2: second search (scope '이번 주', T-paptable 1위) — must precede A2 second ──
+  {
+    keywords: ['참조범위를 수정했습니다', '참조 범위를 수정', '수정했습니다. 다시 찾아'],
+    scopeTimeLabel: '이번 주',
+    results: [
+      { sessionId: 's1', anchorId: 'T-paptable',   tags: ['#논문비교표', '#AI피드백', '#이번주'] },
+      { sessionId: 's1', anchorId: 'T-limit',       tags: ['#ResearchGap', '#논문분석', '#이번주'] },
+      { sessionId: 's6', anchorId: 'T-reliability', tags: ['#비교정리', '#이번주', '#방법론'] },
+    ],
+  },
+  // ── B2: first search (scope 미지정, 4개 카드 날짜 뒤죽박죽) ──────────────
+  {
+    keywords: ['AI 피드백과 글쓰기 논문을 비교하면서', '정리한 표가 있었는데', '정확히는 기억이 안나요'],
+    results: [
+      { sessionId: 's1', anchorId: 'T-paptable',   tags: ['#논문비교표', '#AI피드백', '#문헌리뷰'] },
+      { sessionId: 's2', anchorId: 'T-effect',      tags: ['#비교표', '#효과크기', '#통계분석'] },
+      { sessionId: 's5', anchorId: 'T-relwork',     tags: ['#문헌리뷰', '#연구흐름', '#논문정리'] },
+      { sessionId: 's6', anchorId: 'T-reliability', tags: ['#비교정리', '#방법론', '#타당도신뢰도'] },
+    ],
+  },
   // ── A4: 스마트워치 수면 Abstract 검색 (s5 T-abstract 1위, 나머지 무관) ────
   {
     keywords: ['스마트워치로 수면', '가장 최종적인', '수면 단계 연구를'],

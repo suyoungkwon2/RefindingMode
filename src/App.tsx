@@ -12,6 +12,9 @@ const A2_QUERY = "예전에 알림 관련 연구 설계를 논의하다가 연�
 const A2_FOLLOW_UP_QUERY = '참조범위를 수정했습니다. 다시 찾아주세요.';
 const A3_QUERY = "'타당도'랑 '신뢰도' 개념을 공부하다가 UT 에 적용해서 타당도를 설명한게 있었는데 찾아주세요";
 const A4_QUERY = '스마트워치로 수면 단계 연구를 하는것에 대한 가장 최종적인 Abstract 초안을 찾아줘';
+const B1_QUERY = '박물관 오디오 가이드 리디자인 프로젝트 발표 자료의 슬라이드 구성을 잡았었는데, 그 부분을 찾아주세요';
+const B2_QUERY = '예전에 AI 피드백과 글쓰기 논문을 비교하면서 정리한 표가 있었는데 정확히는 기억이 안나요. 그 표를 찾아주세요';
+const B2_FOLLOW_UP_QUERY = A2_FOLLOW_UP_QUERY;
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('empty');
@@ -75,6 +78,12 @@ export default function App() {
     } else if (task.id === 'A4') {
       setPrefillQuery(A4_QUERY);
       setFollowUpQuery(undefined);
+    } else if (task.id === 'B1') {
+      setPrefillQuery(B1_QUERY);
+      setFollowUpQuery(undefined);
+    } else if (task.id === 'B2') {
+      setPrefillQuery(B2_QUERY);
+      setFollowUpQuery(B2_FOLLOW_UP_QUERY);
     } else {
       setPrefillQuery(undefined);
       setFollowUpQuery(undefined);

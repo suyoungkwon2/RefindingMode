@@ -18,7 +18,7 @@ export default function SplitView({ result, onClose, onContinueHere, onBranchAtT
   useEffect(() => {
     if (anchorTurnId && scrollRef.current) {
       const el = scrollRef.current.querySelector(`#${anchorTurnId}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' });
     }
   }, [anchorTurnId]);
 
