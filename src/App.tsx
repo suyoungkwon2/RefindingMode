@@ -194,7 +194,7 @@ export default function App() {
                   <SessionInputBar />
                 </div>
                 {/* minimap — 세션 모드에서만 표시 */}
-                <div className="w-12 flex-shrink-0 border-l border-gray-100 flex flex-col bg-white">
+                <div className="w-24 flex-shrink-0 border-l border-gray-100 flex flex-col bg-white">
                   <div className="px-1.5 py-2 border-b border-gray-100 flex-shrink-0 text-center">
                     <span className="text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Map</span>
                   </div>
