@@ -16,6 +16,7 @@ const B1_QUERY = '박물관 오디오 가이드 리디자인 프로젝트 발표
 const B2_QUERY = '예전에 AI 피드백과 글쓰기 논문을 비교하면서 정리한 표가 있었는데 정확히는 기억이 안나요. 그 표를 찾아주세요';
 const B2_FOLLOW_UP_QUERY = A2_FOLLOW_UP_QUERY;
 const B3_QUERY = "'타당도'랑 '신뢰도' 개념을 공부하다가 UT 에 적용해서 신뢰도를 설명 한 부분을 다시 보고 싶어요.";
+const B4_QUERY = '전에 정리하던 표집(샘플링) 방법 개념 설명을 찾아주세요';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('empty');
@@ -87,6 +88,9 @@ export default function App() {
       setFollowUpQuery(B2_FOLLOW_UP_QUERY);
     } else if (task.id === 'B3') {
       setPrefillQuery(B3_QUERY);
+      setFollowUpQuery(undefined);
+    } else if (task.id === 'B4') {
+      setPrefillQuery(B4_QUERY);
       setFollowUpQuery(undefined);
     } else {
       setPrefillQuery(undefined);

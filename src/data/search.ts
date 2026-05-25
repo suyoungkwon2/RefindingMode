@@ -56,6 +56,15 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
       { sessionId: 's3', anchorId: 'T-designtable',  tags: ['#연구설계', '#변인', '#측정'] },
     ],
   },
+  // ── B4: 표집(샘플링) 방법 개념 설명 (s6 T-sampling 1위, 나머지 연관성 낮음) ─
+  {
+    keywords: ['정리하던 표집', '표집(샘플링)', '샘플링) 방법 개념'],
+    results: [
+      { sessionId: 's6', anchorId: 'T-sampling', tags: ['#표집', '#Sampling', '#편의표집'] },
+      { sessionId: 's1', anchorId: 'T-limit',    tags: ['#편의표집', '#연구한계', '#표본크기'] },
+      { sessionId: 's2', anchorId: 'T-effect',   tags: ['#통계해석', '#소규모표본', '#측정지표'] },
+    ],
+  },
   // ── A4: 스마트워치 수면 Abstract 검색 (s5 T-abstract 1위, 나머지 무관) ────
   {
     keywords: ['스마트워치로 수면', '가장 최종적인', '수면 단계 연구를'],
