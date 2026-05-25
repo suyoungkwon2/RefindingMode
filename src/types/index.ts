@@ -40,6 +40,15 @@ export interface SearchResult {
 
 export type AppMode = 'empty' | 'search' | 'session' | 'split';
 
+export type UTTaskSet = 'A' | 'B';
+export type UTTaskId = 'A1' | 'A2' | 'A3' | 'A4' | 'B1' | 'B2' | 'B3' | 'B4';
+
+export interface UTTask {
+  id: UTTaskId;
+  set: UTTaskSet;
+  num: number;
+}
+
 export interface SearchChatMessage {
   id: string;
   type: 'user' | 'results' | 'scope-change';

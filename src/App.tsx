@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { AppMode, SearchResult, Session } from './types';
+import type { AppMode, SearchResult, Session, UTTask } from './types';
 import Sidebar from './components/Sidebar';
 import SearchView from './components/SearchView';
 import SessionView from './components/SessionView';
@@ -12,6 +12,16 @@ export default function App() {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [hasSearchResults, setHasSearchResults] = useState(false);
+  const [utTask, setUtTask] = useState<UTTask | null>(null);
+
+  const handleSelectTask = useCallback((task: UTTask) => {
+    setUtTask(task);
+    setActiveSession(null);
+    setActiveSessionId(null);
+    setSelectedResult(null);
+    setHasSearchResults(false);
+    setMode('empty');
+  }, []);
 
   const handleSelectSession = useCallback((session: Session) => {
     setActiveSession(session);
@@ -73,9 +83,11 @@ export default function App() {
       <Sidebar
         activeSessionId={activeSessionId}
         mode={mode}
+        currentTask={utTask}
         onSelectSession={handleSelectSession}
         onEnterSearch={handleEnterSearch}
         onNewChat={handleNewChat}
+        onSelectTask={handleSelectTask}
       />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

@@ -1,29 +1,57 @@
+import { useState } from 'react';
 import { SquarePen, Search, ScanSearch, PanelLeft } from 'lucide-react';
-import type { Session, AppMode } from '../types';
+import type { Session, AppMode, UTTask } from '../types';
 import { sessions } from '../data/sessions';
+import UTTaskSelector from './UTTaskSelector';
 
 interface Props {
   activeSessionId: string | null;
   mode: AppMode;
+  currentTask: UTTask | null;
   onSelectSession: (session: Session) => void;
   onEnterSearch: () => void;
   onNewChat: () => void;
+  onSelectTask: (task: UTTask) => void;
 }
 
-export default function Sidebar({ activeSessionId, mode, onSelectSession, onEnterSearch, onNewChat }: Props) {
+export default function Sidebar({ activeSessionId, mode, currentTask, onSelectSession, onEnterSearch, onNewChat, onSelectTask }: Props) {
   const isSearchMode = mode === 'search' || mode === 'split';
   const sortedSessions = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const [showTaskSelector, setShowTaskSelector] = useState(false);
+
+  function handleSelectTask(task: UTTask) {
+    onSelectTask(task);
+    setShowTaskSelector(false);
+  }
 
   return (
     <aside className="w-60 bg-white border-r border-gray-200 flex flex-col h-full flex-shrink-0">
       {/* top bar */}
-      <div className="flex items-center justify-between px-3 py-3">
-        <div className="w-7 h-7 flex items-center justify-center">
+      <div className="flex items-center justify-between px-3 py-3 relative">
+        <button
+          onClick={() => setShowTaskSelector((v) => !v)}
+          className="relative w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 transition-colors"
+          title="UT 태스크 선택"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <circle cx="10" cy="10" r="9" stroke="#111" strokeWidth="1.5" strokeDasharray="3 2" />
             <circle cx="10" cy="10" r="3" fill="#111" />
           </svg>
-        </div>
+          {currentTask && (
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gray-900 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+              {currentTask.id}
+            </span>
+          )}
+        </button>
+
+        {showTaskSelector && (
+          <UTTaskSelector
+            currentTask={currentTask}
+            onSelect={handleSelectTask}
+            onClose={() => setShowTaskSelector(false)}
+          />
+        )}
+
         <button className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 transition-colors">
           <PanelLeft size={16} />
         </button>
