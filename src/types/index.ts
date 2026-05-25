@@ -24,6 +24,7 @@ export interface Session {
   lastMessage: string;
   turns: Turn[];
   anchors: Anchor[];
+  externalChatUrl?: string;
 }
 
 export type ScopeRange = 'all' | 'current' | 'related';

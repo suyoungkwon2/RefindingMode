@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import type { Session } from '../types';
 
 interface Props {
@@ -16,24 +18,9 @@ export default function SessionView({ session, highlightAnchorId, compact }: Pro
       {session.turns.map((turn) => {
         const isHighlighted = turn.id === anchorTurnId;
         if (turn.role === 'user') {
-          return (
-            <UserTurn
-              key={turn.id}
-              id={turn.id}
-              content={turn.content}
-              highlighted={isHighlighted}
-            />
-          );
+          return <UserTurn key={turn.id} id={turn.id} content={turn.content} highlighted={isHighlighted} />;
         }
-        return (
-          <AiTurn
-            key={turn.id}
-            id={turn.id}
-            content={turn.content}
-            contentType={turn.contentType}
-            highlighted={isHighlighted}
-          />
-        );
+        return <AiTurn key={turn.id} id={turn.id} content={turn.content} highlighted={isHighlighted} />;
       })}
     </div>
   );
@@ -41,10 +28,7 @@ export default function SessionView({ session, highlightAnchorId, compact }: Pro
 
 function UserTurn({ id, content, highlighted }: { id: string; content: string; highlighted: boolean }) {
   return (
-    <div
-      id={id}
-      className={`flex justify-end mb-2 mt-6 ${highlighted ? 'ring-2 ring-blue-300 ring-offset-2 rounded-2xl' : ''}`}
-    >
+    <div id={id} className={`flex justify-end mb-2 mt-6 ${highlighted ? 'ring-2 ring-blue-300 ring-offset-2 rounded-2xl' : ''}`}>
       <div className="max-w-[72%] bg-[#f0f4f9] rounded-3xl px-5 py-3 text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
         {content}
       </div>
@@ -52,33 +36,14 @@ function UserTurn({ id, content, highlighted }: { id: string; content: string; h
   );
 }
 
-function AiTurn({
-  id,
-  content,
-  contentType,
-  highlighted,
-}: {
-  id: string;
-  content: string;
-  contentType?: string;
-  highlighted: boolean;
-}) {
+function AiTurn({ id, content, highlighted }: { id: string; content: string; highlighted: boolean }) {
   return (
-    <div
-      id={id}
-      className={`flex gap-3 mb-1 mt-2 ${highlighted ? 'bg-blue-50 rounded-2xl px-3 py-2 border-l-4 border-blue-400' : ''}`}
-    >
-      {/* Gemini-style sparkle icon */}
+    <div id={id} className={`flex gap-3 mb-1 mt-2 ${highlighted ? 'bg-blue-50 rounded-2xl px-3 py-2 border-l-4 border-blue-400' : ''}`}>
       <div className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-400">
         <SparkleIcon />
       </div>
-
       <div className="flex-1 min-w-0 pb-4">
-        {contentType === 'table' || content.includes('|---|') ? (
-          <MarkdownContent content={content} isTable />
-        ) : (
-          <MarkdownContent content={content} />
-        )}
+        <MarkdownContent content={content} />
       </div>
     </div>
   );
@@ -92,55 +57,211 @@ function SparkleIcon() {
   );
 }
 
-function MarkdownContent({ content, isTable = false }: { content: string; isTable?: boolean }) {
-  if (isTable) {
-    return <MarkdownTable content={content} />;
-  }
+// ─── Search query code block ───────────────────────────────────────────────
 
+function SearchQueryBlock({ lines }: { lines: string[] }) {
+  const [copied, setCopied] = useState(false);
+  const text = lines.join('\n');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="flex items-start gap-2 bg-[#f7f7f8] border border-gray-200 rounded-xl px-4 py-2.5 my-1">
+      <pre className="text-xs text-gray-800 font-mono flex-1 whitespace-pre-wrap leading-relaxed">{text}</pre>
+      <button
+        onClick={handleCopy}
+        className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
+        title="복사"
+      >
+        {copied ? <Check size={13} className="text-green-500" /> : <Copy size={13} />}
+      </button>
+    </div>
+  );
+}
+
+// ─── Inline pipe table ─────────────────────────────────────────────────────
+
+function InlinePipeTable({ lines }: { lines: string[] }) {
+  const isSep = (l: string) => /^\|[\s\-|:]+\|$/.test(l.trim());
+  const parseRow = (l: string) => l.split('|').map((c) => c.trim()).filter(Boolean);
+  const dataLines = lines.filter((l) => !isSep(l));
+  if (dataLines.length < 2) return null;
+  const headers = parseRow(dataLines[0]);
+  const bodyRows = dataLines.slice(1);
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-200 my-3">
+      <table className="text-xs w-full border-collapse">
+        <thead>
+          <tr className="bg-gray-50">
+            {headers.map((h, i) => (
+              <th key={i} className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap">
+                {renderInline(h.replace(/\*\*/g, ''))}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {bodyRows.map((row, ri) => (
+            <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+              {parseRow(row).map((cell, ci) => (
+                <td key={ci} className="px-3 py-2 text-gray-700 border-b border-gray-100 leading-relaxed">
+                  {renderInline(cell.replace(/\*\*/g, ''))}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function isSearchQuery(t: string) {
+  return (
+    (t.startsWith('"') && (t.includes(' AND ') || t.includes(' OR '))) ||
+    (t.startsWith('(') && (t.includes(' OR ') || t.includes(' AND ')))
+  );
+}
+
+function isQueryContinuation(t: string) {
+  return t.startsWith('AND (') || t.startsWith('AND "');
+}
+
+// ─── Main markdown renderer ────────────────────────────────────────────────
+
+function MarkdownContent({ content }: { content: string }) {
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
-  let i = 0;
 
+  const prevBlankOrStart = (idx: number) => idx === 0 || lines[idx - 1].trim() === '';
+  const nextBlankOrEnd   = (idx: number) => idx >= lines.length - 1 || lines[idx + 1].trim() === '';
+
+  let i = 0;
   while (i < lines.length) {
     const line = lines[i];
+    const trimmed = line.trim();
 
-    if (line.trim() === '') {
-      i++;
+    // ── Skip blank lines ──────────────────────────────────────────────────
+    if (trimmed === '') { i++; continue; }
+
+    // ── Pipe table ────────────────────────────────────────────────────────
+    if (trimmed.startsWith('|')) {
+      const tblLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) { tblLines.push(lines[i]); i++; }
+      if (tblLines.length >= 2) elements.push(<InlinePipeTable key={`tbl-${i}`} lines={tblLines} />);
       continue;
     }
 
-    // H3 heading: ###
-    if (line.startsWith('### ')) {
+    // ── Explicit ## heading ───────────────────────────────────────────────
+    if (trimmed.startsWith('## ')) {
+      const text = trimmed.replace(/^## /, '');
+      elements.push(
+        <h2 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">{renderInline(text)}</h2>
+      );
+      i++; continue;
+    }
+
+    // ── Explicit ### heading ──────────────────────────────────────────────
+    if (trimmed.startsWith('### ')) {
       elements.push(
         <h3 key={i} className="text-sm font-bold text-gray-900 mt-4 mb-1.5">
-          {renderInline(line.replace(/^### /, ''))}
+          {renderInline(trimmed.replace(/^### /, ''))}
         </h3>
       );
-      i++;
-      continue;
+      i++; continue;
     }
 
-    // H2-style bold heading: **text** on its own line
-    if (/^\*\*[^*]+\*\*$/.test(line.trim())) {
+    // ── **bold text** on its own line ─────────────────────────────────────
+    if (/^\*\*[^*]+\*\*$/.test(trimmed)) {
       elements.push(
         <p key={i} className="text-sm font-bold text-gray-900 mt-4 mb-1">
-          {line.replace(/\*\*/g, '')}
+          {trimmed.replace(/\*\*/g, '')}
         </p>
       );
-      i++;
+      i++; continue;
+    }
+
+    // ── Horizontal rule ───────────────────────────────────────────────────
+    if (/^-{3,}$/.test(trimmed)) {
+      elements.push(<hr key={i} className="border-t border-gray-200 my-3" />);
+      i++; continue;
+    }
+
+    // ── Numbered section heading (lone \d+. with short text) ──────────────
+    {
+      const m = trimmed.match(/^(\d+)\.\s(.+)$/);
+      if (m) {
+        const [, num, text] = m;
+        const nextTrimmed = (i + 1 < lines.length) ? lines[i + 1].trim() : '';
+        const nextIsNum = /^\d+\.\s/.test(nextTrimmed);
+        if (!nextIsNum && text.length <= 40) {
+          elements.push(
+            <h2 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">
+              <span className="text-gray-500 font-bold">{num}.</span>{' '}{text}
+            </h2>
+          );
+          i++; continue;
+        }
+        // else: fall through to numbered list handler below
+      }
+    }
+
+    // ── Standalone short heading (surrounded by blanks, no end punctuation) ─
+    if (
+      trimmed.length >= 2 &&
+      trimmed.length <= 40 &&
+      prevBlankOrStart(i) &&
+      nextBlankOrEnd(i) &&
+      !/^[•\-\*]\s/.test(trimmed) &&
+      !/^\d+\.\s/.test(trimmed) &&
+      !trimmed.startsWith('|') &&
+      !trimmed.startsWith('(') &&
+      !trimmed.startsWith('"') &&
+      !/[.?!,:]$/.test(trimmed)
+    ) {
+      elements.push(
+        <p key={i} className="text-sm font-semibold text-gray-900 mt-4 mb-1">
+          {trimmed}
+        </p>
+      );
+      i++; continue;
+    }
+
+    // ── Search query code block ───────────────────────────────────────────
+    if (isSearchQuery(trimmed)) {
+      if (trimmed.startsWith('(')) {
+        // Multi-line group: collect AND (...) continuations
+        const queryLines: string[] = [trimmed];
+        i++;
+        while (i < lines.length && isQueryContinuation(lines[i].trim())) {
+          queryLines.push(lines[i].trim());
+          i++;
+        }
+        elements.push(<SearchQueryBlock key={`sq-${i}`} lines={queryLines} />);
+      } else {
+        elements.push(<SearchQueryBlock key={`sq-${i}`} lines={[trimmed]} />);
+        i++;
+      }
       continue;
     }
 
-    // Bullet list item: • or -
-    if (line.match(/^[•\-]\s/)) {
-      const listItems: string[] = [];
-      while (i < lines.length && lines[i].match(/^[•\-]\s/)) {
-        listItems.push(lines[i].replace(/^[•\-]\s/, ''));
+    // ── Bullet list ───────────────────────────────────────────────────────
+    if (/^[•\-\*]\s/.test(trimmed)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[•\-\*]\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[•\-\*]\s/, ''));
         i++;
       }
       elements.push(
         <ul key={i} className="space-y-1 my-2 ml-1">
-          {listItems.map((item, j) => (
+          {items.map((item, j) => (
             <li key={j} className="flex gap-2 text-sm text-gray-800 leading-relaxed">
               <span className="text-gray-400 flex-shrink-0 mt-0.5">•</span>
               <span>{renderInline(item)}</span>
@@ -151,16 +272,16 @@ function MarkdownContent({ content, isTable = false }: { content: string; isTabl
       continue;
     }
 
-    // Numbered list: 1. 2. etc
-    if (line.match(/^\d+\.\s/)) {
-      const listItems: string[] = [];
-      while (i < lines.length && lines[i].match(/^\d+\.\s/)) {
-        listItems.push(lines[i].replace(/^\d+\.\s/, ''));
+    // ── Numbered list ─────────────────────────────────────────────────────
+    if (/^\d+\.\s/.test(trimmed)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^\d+\.\s/, ''));
         i++;
       }
       elements.push(
         <ol key={i} className="space-y-2 my-2 ml-1">
-          {listItems.map((item, j) => (
+          {items.map((item, j) => (
             <li key={j} className="flex gap-2.5 text-sm text-gray-800 leading-relaxed">
               <span className="text-gray-400 flex-shrink-0 font-medium text-xs mt-0.5">{j + 1}.</span>
               <span>{renderInline(item)}</span>
@@ -171,11 +292,11 @@ function MarkdownContent({ content, isTable = false }: { content: string; isTabl
       continue;
     }
 
-    // Code block
-    if (line.startsWith('```')) {
+    // ── Code block (``` ... ```) ───────────────────────────────────────────
+    if (trimmed.startsWith('```')) {
       const codeLines: string[] = [];
       i++;
-      while (i < lines.length && !lines[i].startsWith('```')) {
+      while (i < lines.length && !lines[i].trim().startsWith('```')) {
         codeLines.push(lines[i]);
         i++;
       }
@@ -184,14 +305,13 @@ function MarkdownContent({ content, isTable = false }: { content: string; isTabl
           {codeLines.join('\n')}
         </pre>
       );
-      i++;
-      continue;
+      i++; continue;
     }
 
-    // Regular paragraph
+    // ── Regular paragraph ─────────────────────────────────────────────────
     elements.push(
       <p key={i} className="text-sm text-gray-800 leading-relaxed my-1">
-        {renderInline(line)}
+        {renderInline(trimmed)}
       </p>
     );
     i++;
@@ -201,70 +321,17 @@ function MarkdownContent({ content, isTable = false }: { content: string; isTabl
 }
 
 function renderInline(text: string): React.ReactNode {
-  // Handle inline bold **text**
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   if (parts.length === 1) return text;
   return (
     <>
       {parts.map((part, i) =>
         part.startsWith('**') && part.endsWith('**') ? (
-          <strong key={i} className="font-semibold text-gray-900">
-            {part.replace(/\*\*/g, '')}
-          </strong>
+          <strong key={i} className="font-semibold text-gray-900">{part.replace(/\*\*/g, '')}</strong>
         ) : (
           <span key={i}>{part}</span>
         )
       )}
     </>
-  );
-}
-
-function MarkdownTable({ content }: { content: string }) {
-  const lines = content.split('\n').filter((l) => l.trim());
-  const tableLines = lines.filter((l) => l.includes('|'));
-  if (tableLines.length < 2) {
-    return <pre className="text-sm text-gray-700 whitespace-pre-wrap">{content}</pre>;
-  }
-
-  const parseRow = (line: string) =>
-    line.split('|').map((c) => c.trim()).filter(Boolean);
-
-  const headers = parseRow(tableLines[0]);
-  const bodyRows = tableLines.slice(2);
-  const preTableLines = lines.filter((l) => !l.includes('|'));
-
-  return (
-    <div className="text-sm text-gray-800 space-y-2 my-1">
-      {preTableLines.length > 0 && (
-        <p className="leading-relaxed">{renderInline(preTableLines.join(' '))}</p>
-      )}
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
-        <table className="text-xs w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-50">
-              {headers.map((h, i) => (
-                <th key={i} className="px-3 py-2 text-left font-semibold text-gray-700 border-b border-gray-200">
-                  {h.replace(/\*\*/g, '')}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {bodyRows.map((row, i) => {
-              const cells = parseRow(row);
-              return (
-                <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                  {cells.map((cell, j) => (
-                    <td key={j} className="px-3 py-2 text-gray-700 border-b border-gray-100 leading-relaxed">
-                      {renderInline(cell.replace(/\*\*/g, ''))}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
   );
 }
