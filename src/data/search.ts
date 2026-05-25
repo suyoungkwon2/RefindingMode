@@ -37,6 +37,25 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
       { sessionId: 's6', anchorId: 'T-reliability', tags: ['#비교정리', '#방법론', '#타당도신뢰도'] },
     ],
   },
+  // ── B3: '오늘' 범위 선택 후 검색 (s6 앵커 3개, 모두 Today, T-reliability 1위) ──
+  {
+    keywords: ['신뢰도를 설명 한 부분', '신뢰도를 설명', 'UT 에 적용해서 신뢰도', '다시 보고 싶어요'],
+    scopeTimeLabel: '오늘',
+    results: [
+      { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#UT적용', '#오늘'] },
+      { sessionId: 's6', anchorId: 'T-validity',    tags: ['#타당도', '#UT개념', '#오늘'] },
+      { sessionId: 's6', anchorId: 'T-concept',     tags: ['#방법론개념', '#UT', '#오늘'] },
+    ],
+  },
+  // ── B3: 범위 미지정 검색 (날짜 뒤죽박죽: s6·s1·s3, 최신순 정렬 시 동일) ──
+  {
+    keywords: ['신뢰도를 설명 한 부분', '신뢰도를 설명', 'UT 에 적용해서 신뢰도', '다시 보고 싶어요'],
+    results: [
+      { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#UT적용', '#개념설명'] },
+      { sessionId: 's1', anchorId: 'T-limit',        tags: ['#연구한계', '#방법론', '#측정일관성'] },
+      { sessionId: 's3', anchorId: 'T-designtable',  tags: ['#연구설계', '#변인', '#측정'] },
+    ],
+  },
   // ── A4: 스마트워치 수면 Abstract 검색 (s5 T-abstract 1위, 나머지 무관) ────
   {
     keywords: ['스마트워치로 수면', '가장 최종적인', '수면 단계 연구를'],

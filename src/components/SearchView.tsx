@@ -131,8 +131,12 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
 
     const capturedQ = q;
     const capturedScopeTimeLabel = scopeSelection.time.length > 0 ? scopeSelection.time[0] : '';
+    const capturedSortOrder = sortOrder;
     setTimeout(() => {
-      const results = search(capturedQ, scopeRange, scopeTime, scopeForm, activeSessionId, capturedScopeTimeLabel);
+      let results = search(capturedQ, scopeRange, scopeTime, scopeForm, activeSessionId, capturedScopeTimeLabel);
+      if (capturedSortOrder === '최신순') {
+        results = [...results].sort((a, b) => b.session.date.localeCompare(a.session.date));
+      }
       const tags = extractTags(capturedQ);
 
       const resultsMsg: SearchChatMessage = {
