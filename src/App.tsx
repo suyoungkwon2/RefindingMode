@@ -1,10 +1,12 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { AppMode, SearchResult, Session, UTTask } from './types';
 import Sidebar from './components/Sidebar';
 import SearchView from './components/SearchView';
 import SessionView from './components/SessionView';
 import SplitView from './components/SplitView';
 import { ChevronDown, Share, MoreHorizontal, Mic, BarChart2, Paperclip, Globe, BookOpen } from 'lucide-react';
+
+const A1_QUERY = '생성형 AI 피드백을 받은 그룹의 글쓰기 수정에 대한 대화에서, effect size를 어떻게 해석하는지 설명한 부분을 찾아주세요';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('empty');
@@ -13,6 +15,25 @@ export default function App() {
   const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
   const [hasSearchResults, setHasSearchResults] = useState(false);
   const [utTask, setUtTask] = useState<UTTask | null>(null);
+  const [prefillQuery, setPrefillQuery] = useState<string | undefined>(undefined);
+  const [scrollToTurnId, setScrollToTurnId] = useState<string | null>(null);
+  const [sessionHighlightAnchorId, setSessionHighlightAnchorId] = useState<string | undefined>(undefined);
+  const sessionScrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollToTurnId || mode !== 'session') return;
+    const container = sessionScrollContainerRef.current;
+    if (!container) return;
+    const tryScroll = () => {
+      const el = container.querySelector(`#${scrollToTurnId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setScrollToTurnId(null);
+      }
+    };
+    const timer = setTimeout(tryScroll, 150);
+    return () => clearTimeout(timer);
+  }, [scrollToTurnId, mode]);
 
   const handleSelectTask = useCallback((task: UTTask) => {
     setUtTask(task);
@@ -20,7 +41,14 @@ export default function App() {
     setActiveSessionId(null);
     setSelectedResult(null);
     setHasSearchResults(false);
-    setMode('empty');
+    setSessionHighlightAnchorId(undefined);
+    if (task.id === 'A1') {
+      setPrefillQuery(A1_QUERY);
+      setMode('search');
+    } else {
+      setPrefillQuery(undefined);
+      setMode('empty');
+    }
   }, []);
 
   const handleSelectSession = useCallback((session: Session) => {
@@ -68,6 +96,8 @@ export default function App() {
     setActiveSession(result.session);
     setActiveSessionId(result.session.id);
     setSelectedResult(null);
+    setScrollToTurnId(result.anchor.turnId);
+    setSessionHighlightAnchorId(result.anchor.id);
     setMode('session');
   }, []);
 
@@ -136,8 +166,8 @@ export default function App() {
 
             {mode === 'session' && activeSession && (
               <div className="flex flex-col flex-1 min-h-0">
-                <div className="flex-1 overflow-y-auto scrollbar-thin">
-                  <SessionView session={activeSession} />
+                <div ref={sessionScrollContainerRef} className="flex-1 overflow-y-auto scrollbar-thin">
+                  <SessionView session={activeSession} highlightAnchorId={sessionHighlightAnchorId} />
                 </div>
                 <SessionInputBar />
               </div>
@@ -153,6 +183,8 @@ export default function App() {
                 onGoToSession={handleGoToSession}
                 selectedResult={selectedResult}
                 compact={mode === 'split'}
+                initialQuery={prefillQuery}
+                utTaskId={utTask?.id}
               />
             )}
           </div>

@@ -1198,6 +1198,13 @@ p-value는 표본이 작으면 두 가지 문제가 있습니다.
         tags: ['#연구설계', '#실험조건', '#변인표', '#알림타이밍'],
         preview: '알림 타이밍(집중 중/전환 시점/알림 없음) 3조건의 독립변수·종속변수·측정 도구·예상 관찰 포인트를 한눈에 정리한 연구 설계 표입니다.',
       },
+      {
+        id: 'A1-fakeeffect1',
+        turnId: 's3-t10',
+        label: 'Effect Size 보고 방법',
+        tags: ['#효과크기', '#EffectSize', '#통계해석'],
+        preview: '모바일 알림 실험에서 집중도 저하에 대한 effect size를 Cohen\'s d로 계산하는 방법. 표본이 작을 때 통계적 유의성보다 effect size가 더 유용하며, d > 0.5이면 실질적으로 의미 있는 차이로 해석할 수 있습니다.',
+      },
     ],
     turns: [
       { id: 's3-t1', role: 'user', content: `모바일 알림이 사용자의 집중도에 미치는 영향을 연구해보려고 해. 이 주제를 실험 연구로 잡는다면 어떤 방향이 가능할까?` },
@@ -2182,6 +2189,13 @@ p-value는 표본이 작으면 두 가지 문제가 있습니다.
         label: 'Related Work 초안',
         tags: ['#RelatedWork', '#선행연구', '#문헌리뷰', '#self-tracking'],
         preview: 'self-tracking 연구, 수면 피드백 앱, 알림 피로 세 흐름을 다룬 Related Work 초안. 웨어러블 수면 추적의 자기 인식 촉진과 점수 중심 피드백의 불안 유발 가능성 포함.',
+      },
+      {
+        id: 'A1-fakeeffect2',
+        turnId: 's5-t4',
+        label: '건강 지표 effect size 해석',
+        tags: ['#효과크기', '#수면연구', '#통계해석'],
+        preview: '수면 피드백 앱 효과성 연구에서 effect size 해석 방법. Cohen\'s d 기준으로 0.2 정도는 작은 차이, 0.5 정도는 중간 정도, 0.8 이상은 큰 차이로 해석하며, 건강 관련 연구에서는 작은 effect size도 임상적 의미를 가질 수 있습니다.',
       },
     ],
     turns: [

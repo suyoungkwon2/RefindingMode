@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import type { SearchResult } from '../types';
 
 interface Props {
@@ -6,15 +6,25 @@ interface Props {
   onSelect: (result: SearchResult) => void;
   onGoToSession?: (result: SearchResult) => void;
   isSelected: boolean;
+  utTaskId?: string;
 }
+
+const HOVER_DELAY_MS = 220;
 
 export default function ResultCard({ result, onSelect, onGoToSession, isSelected }: Props) {
   const { session, anchor, matchReasonTags } = result;
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const formattedDate = session.date.replace(/-/g, '.').slice(0, 10);
   const breadcrumb = `${session.title} > ${anchor.label}`;
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -26,6 +36,31 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [contextMenu]);
+
+  const handleMouseEnter = () => {
+    hoverTimerRef.current = setTimeout(() => {
+      onSelect(result);
+    }, HOVER_DELAY_MS);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  const handleClick = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+    if (onGoToSession) {
+      onGoToSession(result);
+    } else {
+      onSelect(result);
+    }
+  };
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -45,7 +80,9 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
   return (
     <div className="relative">
       <button
-        onClick={() => onSelect(result)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onContextMenu={handleContextMenu}
         className={`w-full text-left rounded-xl border transition-all ${
           isSelected
@@ -55,7 +92,7 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
       >
         {/* header row */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-gray-100">
-          <span className="text-xs text-gray-500 truncate mr-4 flex-1">{breadcrumb}</span>
+          <span className="text-xs text-blue-500 truncate mr-4 flex-1">{breadcrumb}</span>
           <span className="text-xs text-gray-400 flex-shrink-0">{formattedDate}</span>
         </div>
 

@@ -11,6 +11,8 @@ interface Props {
   onGoToSession?: (result: SearchResult) => void;
   selectedResult: SearchResult | null;
   compact?: boolean;
+  initialQuery?: string;
+  utTaskId?: string;
 }
 
 function extractTags(query: string): string[] {
@@ -21,19 +23,26 @@ function extractTags(query: string): string[] {
 
 function makeAiIntro(results: SearchResult[]): string {
   if (results.length === 0) return '관련된 대화를 찾지 못했습니다.';
+  if (results[0]?.session.id === 's2' && results[0]?.anchor.id === 'T-effect') {
+    return `가장 관련성 높은 ${results.length}개 답변을 찾아왔습니다`;
+  }
   const tags = results.flatMap((r) => r.anchor.tags.slice(0, 1)).join(', ');
   return `${tags.replace(/#/g, '')} 관련 답변입니다. 가장 관련성 높은 ${results.length}개 지점을 불러왔습니다.`;
 }
 
-export default function SearchView({ activeSessionId, onSelectResult, onGoToSession, selectedResult, compact }: Props) {
+const RESPONSE_DELAY_MS = 1200;
+
+export default function SearchView({ activeSessionId, onSelectResult, onGoToSession, selectedResult, compact, initialQuery, utTaskId }: Props) {
   const [messages, setMessages] = useState<SearchChatMessage[]>([]);
   const [draft, setDraft] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [scopeOpen, setScopeOpen] = useState(false);
   const [scopeSelection, setScopeSelection] = useState<ScopeSelection>({ time: [], range: [], form: [] });
   const [sortLabel] = useState('추천순');
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const queryFilledRef = useRef(false);
 
   const scopeRange: ScopeRange = 'all';
   const scopeTime: ScopeTime = 'all-time';
@@ -46,13 +55,39 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
     return parts.length > 0 ? parts.join(', ') : undefined;
   })();
 
+  // Reset when task/initialQuery changes
+  useEffect(() => {
+    setDraft('');
+    setMessages([]);
+    setActiveTags([]);
+    setIsLoading(false);
+    queryFilledRef.current = false;
+  }, [initialQuery]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
+
+  // Fill query on first focus if initialQuery is set
+  const handleFocus = () => {
+    if (initialQuery && !queryFilledRef.current && draft === '') {
+      queryFilledRef.current = true;
+      setDraft(initialQuery);
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          const len = textareaRef.current.value.length;
+          textareaRef.current.selectionStart = len;
+          textareaRef.current.selectionEnd = len;
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+        }
+      });
+    }
+  };
 
   const handleSubmit = useCallback(() => {
     const q = draft.trim();
-    if (!q) return;
+    if (!q || isLoading) return;
 
     const userMsg: SearchChatMessage = {
       id: `msg-${Date.now()}-user`,
@@ -60,22 +95,29 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
       text: q,
     };
 
-    const results = search(q, scopeRange, scopeTime, scopeForm, activeSessionId);
-    const tags = extractTags(q);
-
-    const resultsMsg: SearchChatMessage = {
-      id: `msg-${Date.now()}-results`,
-      type: 'results',
-      results,
-      aiIntro: makeAiIntro(results),
-      queryTags: tags,
-    };
-
-    setMessages((prev) => [...prev, userMsg, resultsMsg]);
-    setActiveTags(tags);
+    setMessages((prev) => [...prev, userMsg]);
     setDraft('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
-  }, [draft, activeSessionId, scopeRange, scopeTime, scopeForm]);
+    setIsLoading(true);
+
+    const capturedQ = q;
+    setTimeout(() => {
+      const results = search(capturedQ, scopeRange, scopeTime, scopeForm, activeSessionId);
+      const tags = extractTags(capturedQ);
+
+      const resultsMsg: SearchChatMessage = {
+        id: `msg-${Date.now()}-results`,
+        type: 'results',
+        results,
+        aiIntro: makeAiIntro(results),
+        queryTags: tags,
+      };
+
+      setMessages((prev) => [...prev, resultsMsg]);
+      setActiveTags(tags);
+      setIsLoading(false);
+    }, RESPONSE_DELAY_MS);
+  }, [draft, activeSessionId, scopeRange, scopeTime, scopeForm, isLoading]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -96,7 +138,7 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
     <div className="flex flex-col h-full bg-white overflow-hidden">
       {/* conversation area */}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-6">
-        {!hasMessages && (
+        {!hasMessages && !isLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-3">어떤 대화를 찾아드릴까요?</h2>
             {!compact && (
@@ -109,7 +151,7 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
           </div>
         )}
 
-        {hasMessages && (
+        {(hasMessages || isLoading) && (
           <div className="py-6 space-y-6">
             {messages.map((msg) => {
               if (msg.type === 'user') {
@@ -141,6 +183,7 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
                               selectedResult?.session.id === r.session.id &&
                               selectedResult?.anchor.id === r.anchor.id
                             }
+                            utTaskId={utTaskId}
                           />
                         ))}
                       </div>
@@ -163,6 +206,9 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
 
               return null;
             })}
+
+            {isLoading && <ThinkingIndicator />}
+
             <div ref={bottomRef} />
           </div>
         )}
@@ -194,6 +240,7 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
             value={draft}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
+            onFocus={handleFocus}
             placeholder="Ask anything"
             rows={1}
             className="w-full px-4 py-3 text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none bg-transparent leading-relaxed"
@@ -235,6 +282,23 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ThinkingIndicator() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-400 flex-shrink-0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+          <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74L12 2z" />
+        </svg>
+      </div>
+      <div className="flex items-center gap-1">
+        <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '0ms' }} />
+        <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '160ms' }} />
+        <span className="w-2 h-2 rounded-full bg-gray-300 animate-bounce" style={{ animationDelay: '320ms' }} />
       </div>
     </div>
   );

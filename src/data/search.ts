@@ -8,6 +8,14 @@ interface ScriptedPattern {
 
 const SCRIPTED_PATTERNS: ScriptedPattern[] = [
   {
+    keywords: ['effect size를 어떻게', '생성형 ai 피드백을 받은 그룹', '수정에 대한 대화', '글쓰기 수정에 대한'],
+    results: [
+      { sessionId: 's2', anchorId: 'T-effect', tags: ['#p값vs효과크기', '#CohenD기준표', '#소규모표본주의'] },
+      { sessionId: 's3', anchorId: 'A1-fakeeffect1', tags: ['#집중도저하측정', '#실험통계분석', '#CohenD적용'] },
+      { sessionId: 's5', anchorId: 'A1-fakeeffect2', tags: ['#수면앱효과측정', '#임상적유의미성', '#효과크기해석'] },
+    ],
+  },
+  {
     keywords: ['효과크기', 'effect size', 'cohen', '효과 크기', 'cohens d'],
     results: [
       { sessionId: 's2', anchorId: 'T-effect', tags: ['#효과크기', '#통계해석', '#CohenD'] },
