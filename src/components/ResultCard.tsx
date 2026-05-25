@@ -17,7 +17,7 @@ export default function ResultCard({ result, onSelect, onGoToSession, isSelected
   const menuRef = useRef<HTMLDivElement>(null);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const formattedDate = session.date.replace(/-/g, '.').slice(0, 10);
+  const formattedDate = session.date === '2026-05-26' ? 'Today' : session.date.replace(/-/g, '.').slice(0, 10);
   const breadcrumb = `${session.title} > ${anchor.label}`;
 
   useEffect(() => {

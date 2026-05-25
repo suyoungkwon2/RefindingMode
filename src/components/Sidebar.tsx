@@ -12,11 +12,15 @@ interface Props {
   onEnterSearch: () => void;
   onNewChat: () => void;
   onSelectTask: (task: UTTask) => void;
+  extraSessions?: Session[];
 }
 
-export default function Sidebar({ activeSessionId, mode, currentTask, onSelectSession, onEnterSearch, onNewChat, onSelectTask }: Props) {
+export default function Sidebar({ activeSessionId, mode, currentTask, onSelectSession, onEnterSearch, onNewChat, onSelectTask, extraSessions = [] }: Props) {
   const isSearchMode = mode === 'search' || mode === 'split';
-  const sortedSessions = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+  const sortedSessions = [
+    ...extraSessions,
+    ...[...sessions].sort((a, b) => b.date.localeCompare(a.date)),
+  ];
   const [showTaskSelector, setShowTaskSelector] = useState(false);
 
   function handleSelectTask(task: UTTask) {

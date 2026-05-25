@@ -3,10 +3,40 @@ import type { SearchResult, ScopeRange, ScopeTime, ScopeForm, Session } from '..
 
 interface ScriptedPattern {
   keywords: string[];
+  scopeTimeLabel?: string;
   results: Array<{ sessionId: string; anchorId: string; tags: string[] }>;
 }
 
 const SCRIPTED_PATTERNS: ScriptedPattern[] = [
+  // ── A4: 스마트워치 수면 Abstract 검색 (s5 T-abstract 1위, 나머지 무관) ────
+  {
+    keywords: ['스마트워치로 수면', '가장 최종적인', '수면 단계 연구를'],
+    results: [
+      { sessionId: 's5', anchorId: 'T-abstract',  tags: ['#Abstract', '#수면연구', '#최종초안'] },
+      { sessionId: 's5', anchorId: 'T-relwork',   tags: ['#RelatedWork', '#선행연구', '#문헌리뷰'] },
+      { sessionId: 's4', anchorId: 'T-outline',   tags: ['#발표자료', '#슬라이드구성', '#목차'] },
+      { sessionId: 's2', anchorId: 'T-effect',    tags: ['#효과크기', '#통계해석', '#결과분석'] },
+    ],
+  },
+  // ── A3: '오늘' 범위 선택 후 검색 (s6 앵커 3개, 모두 Today) ─────────────────
+  {
+    keywords: ['공부하다가', '설명한게 있었는데', '타당도를 설명한게'],
+    scopeTimeLabel: '오늘',
+    results: [
+      { sessionId: 's6', anchorId: 'T-validity',    tags: ['#UT', '#타당성 개념 설명'] },
+      { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#타당도 비교', '#UT'] },
+      { sessionId: 's6', anchorId: 'T-concept',     tags: ['#방법론', '#보고서작성', '#UT 적용'] },
+    ],
+  },
+  // ── A3: 범위 미지정 검색 (날짜 뒤죽박죽: s6·s3·s1) ──────────────────────
+  {
+    keywords: ['공부하다가', '설명한게 있었는데', '타당도를 설명한게'],
+    results: [
+      { sessionId: 's6', anchorId: 'T-validity',    tags: ['#UT', '#타당성 개념 설명', '#내적타당도'] },
+      { sessionId: 's3', anchorId: 'T-designtable', tags: ['#연구설계', '#변인', '#표'] },
+      { sessionId: 's1', anchorId: 'T-paptable',    tags: ['#표', '#연구흐름', '#비교표'] },
+    ],
+  },
   // ── A2: first search (scope 미지정, T-designtable이 2위) ──────────────────
   {
     keywords: ['연구 조건, 변인', '측정 지표 등을 정리한', '정확한 단어는 기억이 안'],
@@ -118,9 +148,10 @@ function filterByScope(
   scope: ScopeRange,
   activeSessionId: string | null,
   scopeTime: ScopeTime,
-  scopeForm: ScopeForm
+  scopeForm: ScopeForm,
+  scopeTimeLabel: string = ''
 ): Set<string> {
-  const today = new Date('2026-05-23');
+  const today = new Date('2026-05-26');
 
   let eligible = allSessions;
 
@@ -136,12 +167,14 @@ function filterByScope(
     }
   }
 
-  if (scopeTime === 'recent7') {
+  if (scopeTimeLabel === '오늘') {
+    eligible = eligible.filter((s) => s.date === '2026-05-26');
+  } else if (scopeTimeLabel === '이번 주' || scopeTime === 'recent7') {
     eligible = eligible.filter((s) => {
       const diff = Math.floor((today.getTime() - new Date(s.date).getTime()) / 86400000);
       return diff <= 7;
     });
-  } else if (scopeTime === 'recent30') {
+  } else if (scopeTimeLabel === '지난 달' || scopeTime === 'recent30') {
     eligible = eligible.filter((s) => {
       const diff = Math.floor((today.getTime() - new Date(s.date).getTime()) / 86400000);
       return diff <= 30;
@@ -166,15 +199,18 @@ export function search(
   scopeRange: ScopeRange,
   scopeTime: ScopeTime,
   scopeForm: ScopeForm,
-  activeSessionId: string | null
+  activeSessionId: string | null,
+  scopeTimeLabel: string = ''
 ): SearchResult[] {
   if (!query.trim()) return [];
 
-  const eligibleIds = filterByScope(sessions, scopeRange, activeSessionId, scopeTime, scopeForm);
+  const eligibleIds = filterByScope(sessions, scopeRange, activeSessionId, scopeTime, scopeForm, scopeTimeLabel);
 
   // try scripted patterns first
   for (const pattern of SCRIPTED_PATTERNS) {
     if (matchKeywords(query, pattern.keywords)) {
+      // skip if pattern requires a specific time scope label that doesn't match
+      if (pattern.scopeTimeLabel !== undefined && pattern.scopeTimeLabel !== scopeTimeLabel) continue;
       const results: SearchResult[] = [];
       pattern.results.forEach((r, i) => {
         if (!eligibleIds.has(r.sessionId)) return;

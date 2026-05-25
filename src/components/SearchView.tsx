@@ -130,8 +130,9 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
     setIsLoading(true);
 
     const capturedQ = q;
+    const capturedScopeTimeLabel = scopeSelection.time.length > 0 ? scopeSelection.time[0] : '';
     setTimeout(() => {
-      const results = search(capturedQ, scopeRange, scopeTime, scopeForm, activeSessionId);
+      const results = search(capturedQ, scopeRange, scopeTime, scopeForm, activeSessionId, capturedScopeTimeLabel);
       const tags = extractTags(capturedQ);
 
       const resultsMsg: SearchChatMessage = {
@@ -146,7 +147,7 @@ export default function SearchView({ activeSessionId, onSelectResult, onGoToSess
       setActiveTags(tags);
       setIsLoading(false);
     }, RESPONSE_DELAY_MS);
-  }, [draft, activeSessionId, scopeRange, scopeTime, scopeForm, isLoading]);
+  }, [draft, activeSessionId, scopeRange, scopeTime, scopeForm, isLoading, scopeSelection]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {

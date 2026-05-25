@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Bookmark, Share2, RotateCcw, GitBranch, MoreHorizontal } from 'lucide-react';
 import type { Session } from '../types';
 
 interface Props {
   session: Session;
   highlightAnchorId?: string;
   compact?: boolean;
+  onBranchAtTurn?: (turnId: string) => void;
 }
 
-export default function SessionView({ session, highlightAnchorId, compact }: Props) {
+export default function SessionView({ session, highlightAnchorId, compact, onBranchAtTurn }: Props) {
   const anchorTurnId = highlightAnchorId
     ? session.anchors.find((a) => a.id === highlightAnchorId)?.turnId
     : undefined;
@@ -20,7 +21,15 @@ export default function SessionView({ session, highlightAnchorId, compact }: Pro
         if (turn.role === 'user') {
           return <UserTurn key={turn.id} id={turn.id} content={turn.content} highlighted={isHighlighted} />;
         }
-        return <AiTurn key={turn.id} id={turn.id} content={turn.content} highlighted={isHighlighted} />;
+        return (
+          <AiTurn
+            key={turn.id}
+            id={turn.id}
+            content={turn.content}
+            highlighted={isHighlighted}
+            onBranch={onBranchAtTurn ? () => onBranchAtTurn(turn.id) : undefined}
+          />
+        );
       })}
     </div>
   );
@@ -36,14 +45,42 @@ function UserTurn({ id, content, highlighted }: { id: string; content: string; h
   );
 }
 
-function AiTurn({ id, content, highlighted }: { id: string; content: string; highlighted: boolean }) {
+function AiTurn({ id, content, highlighted, onBranch }: { id: string; content: string; highlighted: boolean; onBranch?: () => void }) {
   return (
     <div id={id} className={`flex gap-3 mb-1 mt-2 ${highlighted ? 'bg-blue-50 rounded-2xl px-3 py-2 border-l-4 border-blue-400' : ''}`}>
       <div className="flex-shrink-0 mt-0.5 w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-400">
         <SparkleIcon />
       </div>
-      <div className="flex-1 min-w-0 pb-4">
+      <div className="flex-1 min-w-0 pb-2">
         <MarkdownContent content={content} />
+        <div className={`flex items-center gap-0.5 mt-3 pt-2.5 border-t ${highlighted ? 'border-blue-100' : 'border-gray-100'}`}>
+          <TurnAction icon={<Bookmark size={13} />} title="저장" />
+          <TurnAction icon={<Copy size={13} />} title="복사" />
+          <TurnAction icon={<Share2 size={13} />} title="공유" />
+          <TurnAction icon={<RotateCcw size={13} />} title="재생성" />
+          <TurnAction
+            icon={<GitBranch size={13} />}
+            title="새 브랜치에서 계속"
+            onClick={onBranch}
+          />
+          <TurnAction icon={<MoreHorizontal size={13} />} title="더 보기" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TurnAction({ icon, title, onClick }: { icon: React.ReactNode; title: string; onClick?: () => void }) {
+  return (
+    <div className="relative group/ta">
+      <button
+        onClick={onClick}
+        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+      >
+        {icon}
+      </button>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-800 text-white text-[10px] rounded whitespace-nowrap z-50 pointer-events-none opacity-0 group-hover/ta:opacity-100 transition-none">
+        {title}
       </div>
     </div>
   );

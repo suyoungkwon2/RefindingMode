@@ -11,20 +11,19 @@ export default function Minimap({ session, anchorId, activeTurnId, onClickTurn }
   const anchorTurnId = session.anchors.find((a) => a.id === anchorId)?.turnId;
 
   return (
-    <div className="flex flex-col h-full py-3 px-2 gap-0.5">
+    <div className="flex flex-col py-3 px-2 gap-0.5 overflow-y-auto">
       {session.turns.map((turn, idx) => {
         const isAnchor = turn.id === anchorTurnId;
         const isActive = turn.id === activeTurnId && !isAnchor;
         const isUser = turn.role === 'user';
-        // height proportional to content length (sqrt scale to avoid extremes)
-        const flexVal = Math.max(1, Math.sqrt(turn.content.length / 12));
+        const px = Math.max(14, Math.min(Math.round(Math.sqrt(turn.content.length / 10) * 14), 96));
 
         return (
           <button
             key={turn.id}
             onClick={() => onClickTurn(turn.id)}
             title={`Turn ${idx + 1}: ${isUser ? '사용자' : 'AI'}`}
-            style={{ flex: flexVal }}
+            style={{ height: `${px}px`, flexShrink: 0 }}
             className={`rounded transition-colors hover:opacity-60 ${
               isUser ? 'self-end w-[60%]' : 'w-full'
             } ${

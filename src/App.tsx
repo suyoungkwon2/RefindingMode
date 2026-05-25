@@ -10,6 +10,8 @@ import { ChevronDown, Share, MoreHorizontal, Mic, BarChart2, Paperclip, Globe, B
 const A1_QUERY = '생성형 AI 피드백을 받은 그룹의 글쓰기 수정에 대한 대화에서, effect size를 어떻게 해석하는지 설명한 부분을 찾아주세요';
 const A2_QUERY = "예전에 알림 관련 연구 설계를 논의하다가 연구 조건, 변인, 측정 지표 등을 정리한 '표'가 나왔는데, 정확한 단어는 기억이 안 나고 대화 중간쯤이었던 것 같아요. 그 표를 찾아 주세요.";
 const A2_FOLLOW_UP_QUERY = '참조범위를 수정했습니다. 다시 찾아주세요.';
+const A3_QUERY = "'타당도'랑 '신뢰도' 개념을 공부하다가 UT 에 적용해서 타당도를 설명한게 있었는데 찾아주세요";
+const A4_QUERY = '스마트워치로 수면 단계 연구를 하는것에 대한 가장 최종적인 Abstract 초안을 찾아줘';
 
 export default function App() {
   const [mode, setMode] = useState<AppMode>('empty');
@@ -22,6 +24,8 @@ export default function App() {
   const [followUpQuery, setFollowUpQuery] = useState<string | undefined>(undefined);
   const [scrollToTurnId, setScrollToTurnId] = useState<string | null>(null);
   const [sessionHighlightAnchorId, setSessionHighlightAnchorId] = useState<string | undefined>(undefined);
+  const [branchedFromTitle, setBranchedFromTitle] = useState<string | null>(null);
+  const [branchSessions, setBranchSessions] = useState<Session[]>([]);
   const sessionScrollContainerRef = useRef<HTMLDivElement>(null);
   const [sessionScrollProgress, setSessionScrollProgress] = useState(0);
 
@@ -65,6 +69,12 @@ export default function App() {
     } else if (task.id === 'A2') {
       setPrefillQuery(A2_QUERY);
       setFollowUpQuery(A2_FOLLOW_UP_QUERY);
+    } else if (task.id === 'A3') {
+      setPrefillQuery(A3_QUERY);
+      setFollowUpQuery(undefined);
+    } else if (task.id === 'A4') {
+      setPrefillQuery(A4_QUERY);
+      setFollowUpQuery(undefined);
     } else {
       setPrefillQuery(undefined);
       setFollowUpQuery(undefined);
@@ -76,12 +86,14 @@ export default function App() {
     setActiveSession(session);
     setActiveSessionId(session.id);
     setSelectedResult(null);
+    setBranchedFromTitle(null);
     setMode('session');
   }, []);
 
   const handleEnterSearch = useCallback(() => {
     setSelectedResult(null);
     setHasSearchResults(false);
+    setBranchedFromTitle(null);
     setMode('search');
   }, []);
 
@@ -90,7 +102,33 @@ export default function App() {
     setActiveSessionId(null);
     setSelectedResult(null);
     setHasSearchResults(false);
+    setBranchedFromTitle(null);
     setMode('empty');
+  }, []);
+
+  const handleBranchAtTurn = useCallback((turnId: string, session: Session) => {
+    const anchorTurnIdx = session.turns.findIndex((t) => t.id === turnId);
+    const turnsUpToAnchor = anchorTurnIdx >= 0 ? session.turns.slice(0, anchorTurnIdx + 1) : session.turns;
+    const anchor = session.anchors.find((a) => a.turnId === turnId);
+
+    const branchSession: Session = {
+      id: `branch-${Date.now()}`,
+      title: anchor ? `${anchor.label} — 이어쓰기` : `${session.title} — 이어쓰기`,
+      type: session.type,
+      date: session.date,
+      lastMessage: anchor?.preview ?? '',
+      turns: turnsUpToAnchor,
+      anchors: anchor ? [anchor] : [],
+    };
+
+    setBranchSessions((prev) => [branchSession, ...prev]);
+    setActiveSession(branchSession);
+    setActiveSessionId(branchSession.id);
+    setSelectedResult(null);
+    setHasSearchResults(false);
+    setSessionHighlightAnchorId(undefined);
+    setBranchedFromTitle(session.title);
+    setMode('session');
   }, []);
 
   const handleSelectResult = useCallback((result: SearchResult) => {
@@ -139,6 +177,7 @@ export default function App() {
         onEnterSearch={handleEnterSearch}
         onNewChat={handleNewChat}
         onSelectTask={handleSelectTask}
+        extraSessions={branchSessions}
       />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -189,8 +228,24 @@ export default function App() {
               <div className="flex flex-1 min-h-0 overflow-hidden">
                 <div className="flex flex-col flex-1 min-w-0 min-h-0">
                   <div ref={sessionScrollContainerRef} className="flex-1 overflow-y-auto scrollbar-thin">
-                    <SessionView session={activeSession} highlightAnchorId={sessionHighlightAnchorId} />
+                    <SessionView
+                      session={activeSession}
+                      highlightAnchorId={sessionHighlightAnchorId}
+                      onBranchAtTurn={(turnId) => handleBranchAtTurn(turnId, activeSession)}
+                    />
                   </div>
+                  {branchedFromTitle && (
+                    <div className="flex items-center gap-3 px-8 py-2 border-t border-gray-100 flex-shrink-0">
+                      <span className="flex-1 h-px bg-gray-200" />
+                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                        Branched from{' '}
+                        <span className="text-gray-700 font-medium underline underline-offset-2 cursor-pointer hover:text-gray-900 transition-colors">
+                          {branchedFromTitle}
+                        </span>
+                      </span>
+                      <span className="flex-1 h-px bg-gray-200" />
+                    </div>
+                  )}
                   <SessionInputBar />
                 </div>
                 {/* minimap — 세션 모드에서만 표시 */}
@@ -243,6 +298,7 @@ export default function App() {
                 result={selectedResult}
                 onClose={handleCloseSplit}
                 onContinueHere={handleContinueHere}
+                onBranchAtTurn={handleBranchAtTurn}
               />
             </div>
           )}
