@@ -241,7 +241,7 @@ function MarkdownContent({ content }: { content: string }) {
         if (!nextIsNum && text.length <= 40) {
           elements.push(
             <h2 key={i} className="text-base font-bold text-gray-900 mt-6 mb-2">
-              <span className="text-gray-500 font-bold">{num}.</span>{' '}{text}
+              <span className="text-gray-500 font-bold">{num}.</span>{' '}{renderInline(text.replace(/\*\*/g, ''))}
             </h2>
           );
           i++; continue;
@@ -265,7 +265,7 @@ function MarkdownContent({ content }: { content: string }) {
     ) {
       elements.push(
         <p key={i} className="text-sm font-semibold text-gray-900 mt-4 mb-1">
-          {trimmed}
+          {renderInline(trimmed.replace(/\*\*/g, ''))}
         </p>
       );
       i++; continue;
