@@ -48,13 +48,14 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
       { sessionId: 's6', anchorId: 'T-concept',     tags: ['#방법론개념', '#UT', '#오늘'] },
     ],
   },
-  // ── B3: 범위 미지정 검색 (날짜 뒤죽박죽: s6·s1·s3, 최신순 정렬 시 동일) ──
+  // ── B3: 범위 미지정 검색 (s6 오늘·d2 다른날짜) ──────────────────────────
   {
     keywords: ['신뢰도를 설명 한 부분', '신뢰도를 설명', 'UT 에 적용해서 신뢰도', '다시 보고 싶어요'],
+    bypassScope: true,
     results: [
       { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#UT적용', '#개념설명'] },
-      { sessionId: 's1', anchorId: 'T-limit',        tags: ['#연구한계', '#방법론', '#측정일관성'] },
-      { sessionId: 's3', anchorId: 'T-designtable',  tags: ['#연구설계', '#변인', '#측정'] },
+      { sessionId: 'd2', anchorId: 'd-reliability', tags: ['#신뢰도', '#사용성테스트', '#IRR'] },
+      { sessionId: 's3', anchorId: 'T-designtable', tags: ['#연구설계', '#변인', '#측정'] },
     ],
   },
   // ── B4: 표집(샘플링) 방법 개념 설명 (s6 T-sampling 1위, 나머지 연관성 낮음) ─
@@ -86,13 +87,14 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
       { sessionId: 's6', anchorId: 'T-concept',     tags: ['#방법론', '#보고서작성', '#UT 적용'] },
     ],
   },
-  // ── A3: 범위 미지정 검색 (날짜 뒤죽박죽: s6·s3·s1) ──────────────────────
+  // ── A3: 범위 미지정 검색 (s6 오늘·d2 다른날짜) ──────────────────────────
   {
     keywords: ['공부하다가', '설명한게 있었는데', '타당도를 설명한게'],
+    bypassScope: true,
     results: [
-      { sessionId: 's6', anchorId: 'T-validity',    tags: ['#UT', '#타당성 개념 설명', '#내적타당도'] },
-      { sessionId: 's3', anchorId: 'T-designtable', tags: ['#연구설계', '#변인', '#표'] },
-      { sessionId: 's1', anchorId: 'T-paptable',    tags: ['#표', '#연구흐름', '#비교표'] },
+      { sessionId: 's6', anchorId: 'T-validity',  tags: ['#UT', '#타당성 개념 설명', '#내적타당도'] },
+      { sessionId: 'd2', anchorId: 'd-validity',  tags: ['#타당도', '#사용성테스트', '#관찰연구'] },
+      { sessionId: 's1', anchorId: 'T-paptable',  tags: ['#표', '#연구흐름', '#비교표'] },
     ],
   },
   // ── A2: first search (scope 미지정, T-designtable이 1위) ──────────────────
