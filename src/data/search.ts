@@ -142,7 +142,7 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
     keywords: ['타당도', 'validity', '내적 타당도', '외적 타당도', 'UT 관련', 'UT관련'],
     results: [
       { sessionId: 's6', anchorId: 'T-validity', tags: ['#타당도', '#사용자연구', '#내적타당도'] },
-      { sessionId: 'd2', anchorId: 'D2-validity', tags: ['#타당도', '#사용성테스트', '#관찰연구'] },
+      { sessionId: 'd2', anchorId: 'd-validity', tags: ['#타당도', '#사용성테스트', '#관찰연구'] },
     ],
   },
   {
@@ -170,7 +170,7 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
     keywords: ['신뢰도', 'reliability', '평가자 간', 'irr', 'kappa', 'cronbach'],
     results: [
       { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#CronbachAlpha', '#측정일관성'] },
-      { sessionId: 'd2', anchorId: 'D2-reliability', tags: ['#신뢰도', '#사용성테스트', '#IRR'] },
+      { sessionId: 'd2', anchorId: 'd-reliability', tags: ['#신뢰도', '#사용성테스트', '#IRR'] },
     ],
   },
   {
