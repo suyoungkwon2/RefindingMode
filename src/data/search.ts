@@ -40,7 +40,7 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
   },
   // ── B3: '오늘' 범위 선택 후 검색 (s6 앵커 3개, 모두 Today, T-reliability 1위) ──
   {
-    keywords: ['신뢰도를 설명 한 부분', '신뢰도를 설명', 'UT 에 적용해서 신뢰도', '다시 보고 싶어요'],
+    keywords: ['신뢰도와 타당도를 헷갈려서', '헷갈려서 다시 설명', '다시 설명을 요청했던'],
     scopeTimeLabel: '오늘',
     results: [
       { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#UT적용', '#오늘'] },
@@ -50,7 +50,7 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
   },
   // ── B3: 범위 미지정 검색 (s6 오늘·d2 다른날짜) ──────────────────────────
   {
-    keywords: ['신뢰도를 설명 한 부분', '신뢰도를 설명', 'UT 에 적용해서 신뢰도', '다시 보고 싶어요'],
+    keywords: ['신뢰도와 타당도를 헷갈려서', '헷갈려서 다시 설명', '다시 설명을 요청했던'],
     bypassScope: true,
     results: [
       { sessionId: 's6', anchorId: 'T-reliability', tags: ['#신뢰도', '#UT적용', '#개념설명'] },
