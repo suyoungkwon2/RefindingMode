@@ -4,6 +4,7 @@ import type { SearchResult, ScopeRange, ScopeTime, ScopeForm, Session } from '..
 interface ScriptedPattern {
   keywords: string[];
   scopeTimeLabel?: string;
+  bypassScope?: boolean;
   results: Array<{ sessionId: string; anchorId: string; tags: string[] }>;
 }
 
@@ -94,22 +95,22 @@ const SCRIPTED_PATTERNS: ScriptedPattern[] = [
       { sessionId: 's1', anchorId: 'T-paptable',    tags: ['#표', '#연구흐름', '#비교표'] },
     ],
   },
-  // ── A2: first search (scope 미지정, T-designtable이 2위) ──────────────────
+  // ── A2: first search (scope 미지정, T-designtable이 1위) ──────────────────
   {
     keywords: ['연구 조건, 변인', '측정 지표 등을 정리한', '정확한 단어는 기억이 안'],
     results: [
-      { sessionId: 's1', anchorId: 'T-paptable',     tags: ['#표', '#연구흐름', '#비교표'] },
       { sessionId: 's3', anchorId: 'T-designtable',  tags: ['#연구설계', '#집중도', '#변인표'] },
+      { sessionId: 's1', anchorId: 'T-paptable',     tags: ['#표', '#연구흐름', '#비교표'] },
       { sessionId: 's6', anchorId: 'T-validity',     tags: ['#연구설계', '#타당도', '#UT'] },
       { sessionId: 's5', anchorId: 'T-abstract',     tags: ['#표', '#초안', '#수면연구'] },
     ],
   },
-  // ── A2: second search (scope 수정 후, T-designtable이 1위) ────────────────
+  // ── A2: second search (scope 변경 후, T-designtable이 1위) ────────────────
   {
-    keywords: ['참조범위를 수정했습니다', '참조 범위를 수정', '수정했습니다. 다시 찾아'],
+    keywords: ['참조범위를 변경했습니다', '범위를 변경했습니다', '변경했습니다. 다시 검색'],
+    bypassScope: true,
     results: [
       { sessionId: 's3', anchorId: 'T-designtable',  tags: ['#연구설계', '#실험조건', '#변인표'] },
-      { sessionId: 's3', anchorId: 'A1-fakeeffect1', tags: ['#집중도', '#EffectSize', '#알림타이밍'] },
       { sessionId: 's1', anchorId: 'T-paptable',     tags: ['#표', '#연구흐름', '#문헌리뷰'] },
       { sessionId: 's6', anchorId: 'T-concept',      tags: ['#연구방법', '#개념정리'] },
     ],
@@ -270,7 +271,7 @@ export function search(
       if (pattern.scopeTimeLabel !== undefined && pattern.scopeTimeLabel !== scopeTimeLabel) continue;
       const results: SearchResult[] = [];
       pattern.results.forEach((r, i) => {
-        if (!eligibleIds.has(r.sessionId)) return;
+        if (!pattern.bypassScope && !eligibleIds.has(r.sessionId)) return;
         const session = sessions.find((s) => s.id === r.sessionId);
         const anchor = session?.anchors.find((a) => a.id === r.anchorId);
         if (session && anchor) {

@@ -9,12 +9,12 @@ import { ChevronDown, Share, MoreHorizontal, Mic, BarChart2, Paperclip, Globe, B
 
 const A1_QUERY = '생성형 AI 피드백을 받은 그룹의 글쓰기 수정에 대한 대화에서, effect size를 어떻게 해석하는지 설명한 부분을 찾아주세요';
 const A2_QUERY = "예전에 알림 관련 연구 설계를 논의하다가 연구 조건, 변인, 측정 지표 등을 정리한 '표'가 나왔는데, 정확한 단어는 기억이 안 나고 대화 중간쯤이었던 것 같아요. 그 표를 찾아 주세요.";
-const A2_FOLLOW_UP_QUERY = '참조범위를 수정했습니다. 다시 찾아주세요.';
+const A2_FOLLOW_UP_QUERY = '참조범위를 변경했습니다. 다시 검색해 주세요.';
 const A3_QUERY = "'타당도'랑 '신뢰도' 개념을 공부하다가 UT 에 적용해서 타당도를 설명한게 있었는데 찾아주세요";
 const A4_QUERY = '스마트워치로 수면 단계 연구를 하는것에 대한 가장 최종적인 Abstract 초안을 찾아줘';
 const B1_QUERY = '박물관 오디오 가이드 리디자인 프로젝트 발표 자료의 슬라이드 구성을 잡았었는데, 그 부분을 찾아주세요';
 const B2_QUERY = '예전에 AI 피드백과 글쓰기 논문을 비교하면서 정리한 표가 있었는데 정확히는 기억이 안나요. 그 표를 찾아주세요';
-const B2_FOLLOW_UP_QUERY = A2_FOLLOW_UP_QUERY;
+const B2_FOLLOW_UP_QUERY = '참조범위를 수정했습니다. 다시 찾아주세요.';
 const B3_QUERY = "'타당도'랑 '신뢰도' 개념을 공부하다가 UT 에 적용해서 신뢰도를 설명 한 부분을 다시 보고 싶어요.";
 const B4_QUERY = '전에 정리하던 표집(샘플링) 방법 개념 설명을 찾아주세요';
 
