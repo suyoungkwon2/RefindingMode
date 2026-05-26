@@ -16,7 +16,23 @@ interface Props {
   utTaskId?: string;
 }
 
+const SCRIPTED_TAG_MAP: Array<{ detect: string; tags: string[] }> = [
+  { detect: 'effect size를 어떻게',        tags: ['effect size', '생성형AI피드백', '글쓰기수정'] },
+  { detect: '연구 조건, 변인',              tags: ['연구설계', '변인', '측정지표'] },
+  { detect: '참조범위를 변경했습니다',       tags: ['참조범위 변경', '재검색'] },
+  { detect: '타당도를 설명한게',            tags: ['타당도', 'UT적용', '개념설명'] },
+  { detect: '수면 단계 연구를',             tags: ['Abstract초안', '수면연구', '스마트워치'] },
+  { detect: '슬라이드 구성을 잡았었는데',   tags: ['슬라이드구성', '발표자료', '오디오가이드'] },
+  { detect: 'AI 피드백과 글쓰기 논문을 비교', tags: ['논문비교표', 'AI피드백', '글쓰기'] },
+  { detect: '참조범위를 수정했습니다',       tags: ['참조범위 수정', '재검색'] },
+  { detect: '신뢰도를 설명 한 부분',        tags: ['신뢰도', 'UT적용', '개념설명'] },
+  { detect: '표집(샘플링)',                 tags: ['표집', '샘플링', '개념설명'] },
+];
+
 function extractTags(query: string): string[] {
+  const match = SCRIPTED_TAG_MAP.find((entry) => query.includes(entry.detect));
+  if (match) return match.tags;
+
   const words = query.replace(/[.,?!]/g, '').split(/\s+/);
   const stopWords = new Set(['에', '을', '를', '이', '가', '은', '는', '에서', '으로', '로', '와', '과', '의', '대해', '대한', '관련', '찾아줘', '알려줘', '설명해', '줘', '해줘', '주세요', '부분', '내용', '것', '에서의', '하는', '하는데', '했는데', 'HCI', '연구중에', '연구중']);
   return words.filter((w) => w.length >= 2 && !stopWords.has(w)).slice(0, 4);
