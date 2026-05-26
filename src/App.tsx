@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import type { AppMode, SearchResult, Session, UTTask } from './types';
 import Sidebar from './components/Sidebar';
 import SearchView from './components/SearchView';
@@ -46,19 +46,15 @@ export default function App() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [mode]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!scrollToTurnId || mode !== 'session') return;
     const container = sessionScrollContainerRef.current;
     if (!container) return;
-    const tryScroll = () => {
-      const el = container.querySelector(`#${scrollToTurnId}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setScrollToTurnId(null);
-      }
-    };
-    const timer = setTimeout(tryScroll, 150);
-    return () => clearTimeout(timer);
+    const el = container.querySelector(`#${scrollToTurnId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'instant', block: 'start' });
+      setScrollToTurnId(null);
+    }
   }, [scrollToTurnId, mode]);
 
   const handleSelectTask = useCallback((task: UTTask) => {
@@ -172,7 +168,15 @@ export default function App() {
     setActiveSession(result.session);
     setActiveSessionId(result.session.id);
     setSelectedResult(null);
-    setScrollToTurnId(result.anchor.turnId);
+    const turns = result.session.turns;
+    const anchorTurnId = result.anchor.turnId;
+    const anchorIdx = turns.findIndex((t) => t.id === anchorTurnId);
+    let scrollTargetId = anchorTurnId;
+    if (anchorIdx !== -1 && turns[anchorIdx].role === 'assistant') {
+      const precedingUser = turns.slice(0, anchorIdx).reverse().find((t) => t.role === 'user');
+      if (precedingUser) scrollTargetId = precedingUser.id;
+    }
+    setScrollToTurnId(scrollTargetId);
     setSessionHighlightAnchorId(result.anchor.id);
     setMode('session');
   }, []);

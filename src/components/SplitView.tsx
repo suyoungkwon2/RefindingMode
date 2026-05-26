@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { X, Download } from 'lucide-react';
 import type { SearchResult, Session } from '../types';
 import SessionView from './SessionView';
@@ -15,12 +15,19 @@ export default function SplitView({ result, onClose, onContinueHere, onBranchAtT
   const anchorTurnId = session.anchors.find((a) => a.id === anchor.id)?.turnId;
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (anchorTurnId && scrollRef.current) {
-      const el = scrollRef.current.querySelector(`#${anchorTurnId}`);
-      if (el) el.scrollIntoView({ behavior: 'instant', block: 'center' });
+      const turns = session.turns;
+      const anchorIdx = turns.findIndex((t) => t.id === anchorTurnId);
+      let scrollTargetId = anchorTurnId;
+      if (anchorIdx !== -1 && turns[anchorIdx].role === 'assistant') {
+        const precedingUser = turns.slice(0, anchorIdx).reverse().find((t) => t.role === 'user');
+        if (precedingUser) scrollTargetId = precedingUser.id;
+      }
+      const el = scrollRef.current.querySelector(`#${scrollTargetId}`);
+      if (el) el.scrollIntoView({ behavior: 'instant', block: 'start' });
     }
-  }, [anchorTurnId]);
+  }, [anchorTurnId, session.turns]);
 
   const breadcrumb = anchor.label
     ? `${session.title} > ${anchor.label}`
