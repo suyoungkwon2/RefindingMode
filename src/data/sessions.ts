@@ -2185,7 +2185,7 @@ p-value는 표본이 작으면 두 가지 문제가 있습니다.
     anchors: [
       {
         id: 'T-abstract',
-        turnId: 's5-t4',
+        turnId: 's5-t6',
         label: 'Abstract 초안',
         tags: ['#Abstract', '#논문초안', '#수면연구', '#웨어러블'],
         preview: '스마트워치 수면 피드백 앱이 수면 인식과 행동 변화에 미치는 영향 연구 Abstract 초안. 설문·인터뷰 혼합 방법, 대학생 대상, 수면 데이터 확인 빈도 및 행동 변화 분석.',
